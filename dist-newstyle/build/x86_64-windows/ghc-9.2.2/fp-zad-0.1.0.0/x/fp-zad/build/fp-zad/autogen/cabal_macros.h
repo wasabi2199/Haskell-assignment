@@ -70,6 +70,16 @@
   (major1) == 3 && (major2) <  2 || \
   (major1) == 3 && (major2) == 2 && (minor) <= 2)
 #endif /* MIN_VERSION_parallel */
+/* package split-0.2.3.4 */
+#ifndef VERSION_split
+#define VERSION_split "0.2.3.4"
+#endif /* VERSION_split */
+#ifndef MIN_VERSION_split
+#define MIN_VERSION_split(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  2 || \
+  (major1) == 0 && (major2) == 2 && (minor) <= 3)
+#endif /* MIN_VERSION_split */
 /* package tagsoup-0.14.8 */
 #ifndef VERSION_tagsoup
 #define VERSION_tagsoup "0.14.8"
@@ -80,6 +90,16 @@
   (major1) == 0 && (major2) <  14 || \
   (major1) == 0 && (major2) == 14 && (minor) <= 8)
 #endif /* MIN_VERSION_tagsoup */
+/* package text-1.2.5.0 */
+#ifndef VERSION_text
+#define VERSION_text "1.2.5.0"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  2 || \
+  (major1) == 1 && (major2) == 2 && (minor) <= 5)
+#endif /* MIN_VERSION_text */
 
 /* tool gcc-10.2.0 */
 #ifndef TOOL_VERSION_gcc

@@ -7,14 +7,16 @@ import Text.HTML.TagSoup
 import System.Directory
 import Control.Monad
 import System.IO
+import Data.List.Split
 import Data.List
 import Data.Maybe
 import qualified Data.ByteString.Lazy.Char8
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics
 import Data.Aeson
---Data "classes" which everyone uses--
----------------------------------------
+import Data.Char
+import qualified Data.Text.Encoding as E
+
 data WebPage = WebPage {url :: String, html_content :: String} deriving (Show, Generic)
 
 data WebPageRank = WebPageRank {urlP :: String, pagerank :: Double} deriving (Show, Generic)
@@ -44,8 +46,8 @@ instance FromJSON WebPage where
 
 instance ToJSON WebPage where
     toJSON (WebPage url html_content) = object ["url" .= url, "html_content" .= html_content]
----------------------------------------
 
+---------------------------------------
 --Sabina Daniela Pekareková--
 ---------------------------------------
 findString :: (Eq a) => [a] -> [a] -> Maybe Int
@@ -80,77 +82,79 @@ getParsedFile page = case page of
     Just val -> (getUrl wp, innerText $ parseTags $ delTag (delTag val "<script" "</script>") "<style" "</style>")
     Nothing -> (" ", " ")
   Nothing -> (" ", " ")
----------------------------------------
+------------------------------------------------
+-- Snaha o odstranenie unicode charov z textu --
+{-
+rInt :: String -> Int
+rInt = read
 
+replaceAll :: String -> String
+replaceAll str = concat $ map (\s -> replaceSpecial Nothing s) (splitOn "\\" str)
+
+replaceSpecial :: Maybe Int -> String -> String
+replaceSpecial Nothing []  = []
+replaceSpecial (Just a) []  = (chr a):[]
+replaceSpecial (Just a) (x:xs)
+  | isDigit x = replaceSpecial (Just (a * 10 + (digitToInt x))) xs
+  | otherwise = (chr a):x:xs
+replaceSpecial Nothing (x:xs)
+  | isDigit x = replaceSpecial (Just (digitToInt x)) xs
+  | otherwise = x:xs
+-}
+------------------------------------------------
+---------------------------------------
 --Filip Michal Gajdoš--
 ---------------------------------------
+findWordNew :: String -> ((Int, Double), (String, String)) -> (Double, String)
+findWordNew arg page = case findString (" " ++ arg ++ " ") (snd ( snd page)) of
+  Just value -> (snd (fst page), fst (snd page))
+  Nothing -> (0.0, "None")
 
-{-
-findString :: (Eq a) => [a] -> [a] -> Maybe Int
-findString search str = findIndex (isPrefixOf search) (tails str)
--}
+getWebPages :: String -> [(String, String)]
+getWebPages file = map getParsedFile (map decode (map lazyByteString (lines file)) :: [Maybe WebPage])
 
-findWord :: [Char] -> [Char] -> Bool
-findWord arg text = case findString (" " ++ arg ++ " ") text of
-  Just value -> True
-  Nothing -> False
+getWebPageRanks :: String -> [Maybe WebPageRank]
+getWebPageRanks file = map decode (map lazyByteString (lines file)) :: [Maybe WebPageRank]
 
-addNumbers :: [(String, String)] -> [(Int, (String, String))]
-addNumbers list = zip [1..] list
+prepare_inv_index :: String -> [(Int, Double)] -> String -> [(Double, String)]
+prepare_inv_index arg  idxAndPageRank file = filter (/=(0.0,"None")) $ zipWith findWordNew (take (length (lines file)) (iterate (++"") arg)) (zip idxAndPageRank (getWebPages file))
 
-writeFnum :: (Show a) => a -> IO ()
-writeFnum num = appendFile "inverted_index.txt" $ show num
-
-writeF :: String -> IO ()
-writeF text = appendFile "inverted_index.txt" $ text
-
-prepare_inv_index :: String -> IO ()
-prepare_inv_index arg = do
-    writeF (arg ++ " [")
-    fl <- readFile $ "output.jl"
-    flp <- readFile $ "pagerank.jsonl"
-    forM_ (addNumbers (map getParsedFile (map decode (map lazyByteString (lines fl)) :: [Maybe WebPage]))) $ \parsed_tuple -> case findWord arg (snd (snd parsed_tuple)) of
-      True -> do
-        writeF ("(") >> writeFnum (fst parsed_tuple) >> writeF (",")
-        case ((map decode (map lazyByteString (lines flp)) :: [Maybe WebPageRank]) !! ((fst parsed_tuple)-1)) of
-          Just val -> writeFnum (getPageRank val)
-          Nothing -> writeFnum 0
-        writeF ("),")
-      False -> return ()
-    writeF ("(-1,-1)]\n")
-
-rList :: String -> [(Int, Double)]
-rList = read
-
-inverted_index :: IO ()
-inverted_index = do
-  content <- readFile "./inverted_index.txt"
-  fl <- readFile $ "output.jl"
-  let wPages = map decode (map lazyByteString (lines fl)) :: [Maybe WebPage]
-  let numbered_parsed_pages = addNumbers $ map getParsedFile wPages
-  writeFile "test.txt" ""
-  forM_ (lines content) $ \line -> do
-    putStr (((words line) !! 0) ++ " ") >> appendFile "test.txt" (show (init (reverse (sortOn snd (rList ((words line) !! 1)))))) >> appendFile "test.txt" " "
-  putStrLn ""
-  final_file <- readFile "./test.txt"
-  forM_ (lines final_file) $ \line -> do
-    let intersection = foldl1 intersect $ map rList (words line)
-    if intersection == [] then putStrLn "slovo/a sa nenachadzaju na ziadnej stranke"
-    else do
-      putStrLn "slovo/a sa nachadzaju na strankach"
-      forM_ intersection $ \tuple -> do
-        putStr ("(" ++ (fst (snd (numbered_parsed_pages !! ((fst tuple)-1)))) ++ ", " ++ (show (snd tuple)) ++ "), ")
-      putStrLn ""
-  removeFile "inverted_index.txt" >> removeFile "test.txt"
 ---------------------------------------
+--Michaela Polakova--
+---------------------------------------
+appFile :: String -> IO()
+appFile url = case findString "https:" url of
+    Just val -> appendFile "parserOutputPages.txt" (", " ++ (snd (splitAt (val) url)))
+    Nothing -> appendFile "parserOutputPages.txt" ""
 
---Main?--
+mapPage :: Maybe WebPage -> IO ()
+mapPage mpage = case mpage of
+  (Just val) -> do
+     appendFile "parserOutputPages.txt" $ getUrl val
+     mapM appFile $ map(fromAttrib "href") $ filter (~== TagOpen ("a"::String) []) $ parseTags $ getHmtlContent val
+     appendFile "parserOutputPages.txt" " \n"
+  Nothing -> appendFile "parserOutputPages.txt" ""
+
+parsePages :: String -> IO [()]
+parsePages fl = writeFile "parserOutputPages.txt" "" >> mapM mapPage (map decode (map lazyByteString (lines fl)) :: [Maybe WebPage])
+
+---------------------------------------
+--Main--
 ---------------------------------------
 main :: IO ()
 main = do
+  print "Vytvaranie URL ref..."
+  mainFile <- readFile "output.jl"
+  parsePages mainFile
+  print "Hotovo"
+  putStrLn "----------------"
   putStrLn "Zadaj hladane slova" >> writeFile "./inverted_index.txt" ""
   input <- getLine
-  putStrLn "---------"
-  forM_ (words input) $ \arg -> do
-    prepare_inv_index arg
-  inverted_index
+  pageranks <- readFile "pagerank.jsonl"
+  let indxAndPageRank = (take (length (lines mainFile)) (zip [1..] (map getPageRank (map fromJust (getWebPageRanks pageranks)))))
+  putStrLn "----------------"
+  let intersection = foldl1 intersect (zipWith3 prepare_inv_index (words input) (replicate (length (words input)) indxAndPageRank) (replicate (length (words input)) mainFile))
+  if intersection == [] then print "Vsetky slovo/a sa nenachadzaju v ziadnej stranke"
+  else do
+    putStrLn "slovo/a sa nachadzaju v strankach:"
+    print $ reverse $ sortOn fst $ take 10 intersection
