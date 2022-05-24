@@ -1,7 +1,7 @@
 # Tento projekt obsahuje vypracovane zadanie z predmetu Funkcionalne programovanie FEI STUBA
 # instrukcie k spusteniu
--stiahnite repozitar__
--zadajte prikaz cabal run do terminalu (mali by sa stiahnut vsetky potrebne kniznice vdaka ich zadefinovaniu v fp-zad.cabal)__
+-stiahnite repozitar  
+-zadajte prikaz cabal run do terminalu (mali by sa stiahnut vsetky potrebne kniznice vdaka ich zadefinovaniu v fp-zad.cabal)  
 -po zbehnuti casti href parser zadajte slovo alebo slova, ktore sa maju v strankach vyhladat
 # href parser - M. Polakova
 Parser ktorý upravuje stránky pre pagerank. Tuto cast tvoria funkcie: appFile, mapPage a parsePages. parsePages funkcia vytvorí textový súbor s názvom "parserOutputPages.txt". V tomto súbore je na prvom mieste url stránky, ktorá bola parsovaná a ďaľšie sú url, ktoré sa na danej stránke nachádzajú (každá stránka je rozdelená čiarkou).
