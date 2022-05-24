@@ -1,6 +1,6 @@
 # Tento projekt obsahuje vypracovane zadanie z predmetu Funkcionalne programovanie FEI STUBA
 # instrukcie k spusteniu
--stiahnite repozitar
+-stiahnite repozitar \n
 -zadajte prikaz cabal run do terminalu (mali by sa stiahnut vsetky potrebne kniznice vdaka ich zadefinovaniu v fp-zad.cabal)
 -po zbehnuti casti href parser zadajte slovo alebo slova, ktore sa maju v strankach vyhladat
 # href parser - M. Polakova
